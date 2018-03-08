@@ -1,18 +1,60 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import TodoForm from './components/TodoForm';
+import TodoList from './components/TodoList';
+import axios from 'axios'
 
 class App extends Component {
+  state = { todos: [] }
+
+  componentDidMount() {
+    axios.get('/api/items')
+      .then( res => res.json() )
+      .then( todos => this.setState({ todos }) )
+  }
+
+  addItem = (name) => {
+    let item = { name }
+    fetch('/api/items', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(item)
+    }).then( res => res.json() )
+      .then( todo => {
+        const { todos } = this.state;
+        this.setState({ todos: [...todos, todo] })
+      })
+  }
+
+  updateTodo = (id) => {
+    let todos = this.state.todos.map( t => {
+      if (t.id === id)
+        return { ...t, complete: !t.complete }
+      return t
+    })
+
+    this.setState({ todos })
+  }
+
+  deleteTodo = (id) => {
+    const { todos } = this.state
+    this.setState({ 
+      todos: todos.filter( t => t.id !== id ) 
+    })
+  }
+
+
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+      <div className="container">
+        <TodoForm addItem={this.addItem} />
+        <TodoList
+          todos={this.state.todos}
+          updateTodo={this.updateTodo}
+          deleteTodo={this.deleteTodo}
+        />
       </div>
     );
   }
